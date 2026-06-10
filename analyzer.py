@@ -1,132 +1,59 @@
 from typing import Dict, List, Any
 
-#With these type of functions like this as its function header, 
-# it is to make explicit traits of what it is to be an argument put in and what is expected to return. 
-def calculate_genre_diversity(genres: Dict[str, int]) -> float:
-    
-    """
-    Calculates how varied the user's genre taste is.
-    """
-
-    #This is to check if there was an empty input, to which will return 0.0.
-    if genres is None or len(genres) == 0:
-        return 0.0
-    
-    #This is to go over that of the unique genres seen overall. 
-    unique_genre_count = 0
-    for _ in genres: 
-        unique_genre_count += 1
-
-    #This is to get that of the total genre mentions overall.
-    total_genre_mentions = 0
-    for count in genres.values():
-        total_genre_mentions += count
-
-    #This is to avoid that of division errors.
-    if total_genre_mentions == 0:
-        return 0.0
-    
-    #This is to make the ratio based on unique genres counted divided by the 
-    # total genre mentions.
-    ratio = unique_genre_count / total_genre_mentions
-
-    #This is to convert the ratio's value into a percentage score.
-    score = ratio * 100
-
-    #Returns the score as a double value by 2 decimals. 
-    return round(score, 2)
-
 
 def calculate_artist_diversity(artists: List[str]) -> float:
-
     """
-    Calculates that of the user's diverse taste in artists. 
+    Calculates realistic artist diversity score based on the number of artists and rank distribution of the artists.
     """
 
-    #This is to check if there was an empty input, to which will return 0.0.
-    if artists is None or len(artists) == 0:
+    #If there are no artists to get to calculate artist diversity, return 0.0.
+    if not artists:
         return 0.0
-    
-    #This is to over that of the total artists mentioned overall.
-    total_artists = 0
-    for artist in artists: 
-        total_artists += 1
 
-    #This is to get that of the unique artists overall.
-    unique_artist_set = set()
+    #Gets how many artists to get 
+    n = len(artists)
 
-    #For each artist gotten, add them to the set. 
-    for artist in artists:
-        unique_artist_set.add(artist)
+    # Normalizes against a realistic max (not just dataset size).
+    max_expected_artists = 50
+    coverage_score = min(n / max_expected_artists, 1.0)
 
-    #This is to go over that of the unique artists overall. 
-    unique_artist_count = 0
-    for _ in unique_artist_set: 
-        unique_artist_count += 1
+    # If user is heavily top-heavy, score drops slightly
+    rank_sum = sum(range(1, n + 1))
+    max_rank_sum = n * (n + 1) / 2
 
-    #This is to avoid that of division errors.
-    if total_artists == 0:
-        return 0.0
-    
-    #This is to make the ratio based on the count of the unique artist count divided
-    # by the total artists mentioned. 
-    ratio = unique_artist_count / total_artists
+    rank_distribution = 1 - (rank_sum / max_rank_sum)
 
-    #This is to convert ratio's value into a percentage score.
-    score = ratio*100
+    #Final artist diversity score. 
+    diversity = (0.7 * coverage_score + 0.3 * rank_distribution) * 100
 
-    #Returns the score as a double value by 2 decimals.
-    return round(score, 2)
+    return round(diversity, 2)
 
 
-def calculate_personality_traits(genre_score: float, artist_score: float) -> str:
-
+def calculate_personality_traits(artist_score: float) -> str:
     """
-    This is to match whatever personality trait the user has based on that of the user's
-    diversity scores.
+    Maps artist diversity score into personality types.
     """
 
-    #This is to establish the threshold that will be the determiner what the user's personality
-    # trait will be based on the user's scores. 
-    HIGH_THRESHOLD = 60
-
-    #Checks if that of the genre score will be more than that of the threshold.
-    if genre_score >= HIGH_THRESHOLD:
-        if artist_score >= HIGH_THRESHOLD:
-            return "Musical Explorer"
-        else:
-            return "Genre Adventurer"
+    if artist_score >= 70:
+        return "Artist Collector"
+    elif artist_score >= 40:
+        return "Balanced Listener"
     else:
-        if artist_score >= HIGH_THRESHOLD:  
-            return "Artist Collector"
-        else: 
-            return "Comfort Listener"
-        
+        return "Comfort Listener"
 
-def generate_personality_profile(genres: Dict[str, int], artists: List[str]) -> Dict[str, Any]:
 
+def generate_personality_profile(artists: List[str]) -> Dict[str, Any]:
     """
-    This is to make that of the personality profile from the Spotify data.
+    Builds the final personality profile from Spotify artist data.
     """
 
-    #This is to get that of the genre score.
-    genre_score = calculate_genre_diversity(genres)
-
-    #This is to get that of the artist score.
     artist_score = calculate_artist_diversity(artists)
+    personality_type = calculate_personality_traits(artist_score)
 
-    #This is to determine that of the personality type.
-    personality_type = calculate_personality_traits(
-        genre_score, 
-        artist_score
-    )
-
-    #Builds that of the structure for the profile.
-    profile = {}
-    profile["personality"] = personality_type
-    profile["genre_score"]  = genre_score
-    profile["artist_score"] = artist_score
-    profile["genre_breakdown"] = genres
-    profile["artist_list"] = artists
+    profile = {
+        "personality": personality_type,
+        "artist_score": artist_score,
+        "artist_list": artists
+    }
 
     return profile

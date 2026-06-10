@@ -89,51 +89,14 @@ def get_top_tracks(sp, limit=5):
     return top_tracks
 
 
-def extract_genres(sp, limit=50):
+def build_music_profile(top_artists, top_tracks):
     """
-    Get that of the genres that the user listens to based on the user's top artists.
-    """
-
-    #This is to get that of the user's top artists.
-    results = sp.current_user_top_artists(
-        limit = limit,
-        time_range = "long_term"
-    )
-
-    #Stores the user's top artists.
-    items = results.get("items", [])
-    
-    #Gets that of the genre's counted based on the artist's connection to their genre.
-    genre_counts = {}
-
-    #Go through each artist to which then, get that of their respective genres.
-    for artist in items:
-        artist_genres = artist.get("genres", [])
-
-        #Go through each genre where if it has not been counted yet, initialized it
-        # to be counted. If it has been counted before, increase it by one based on how
-        # much it was counted before. 
-        for genre in artist_genres:
-
-            if genre in genre_counts:
-                genre_counts[genre] += 1
-
-            else:
-                genre_counts[genre] = 1
-
-    #This is to then get that of the genres counted overall. 
-    return genre_counts
-
-
-def build_music_profile(top_artists, top_tracks, genres):
-    """
-    This makes the music profile based on the user's top artists, tracks and genres.
+    This makes the music profile based on the user's top artists and tracks. 
     """
 
     profile = {
         "top_artists": top_artists,
         "top_tracks": top_tracks, 
-        "genres": genres
     }
 
     return profile
