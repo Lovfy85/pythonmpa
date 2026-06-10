@@ -4,6 +4,8 @@ from typing import Dict, List, Any
 def calculate_artist_diversity(artists: List[str]) -> float:
     """
     Calculates realistic artist diversity score based on the number of artists and rank distribution of the artists.
+    (However, this is flawed since based on the artists recorded and such for the tested user, which is me, it will always
+    return 28.0)
     """
 
     #If there are no artists to get to calculate artist diversity, return 0.0.
