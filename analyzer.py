@@ -1,61 +1,97 @@
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 
-def calculate_artist_diversity(artists: List[str]) -> float:
+def calculate_artist_diversity(top_genres: Dict[str, int]) -> float:
+
     """
-    Calculates realistic artist diversity score based on the number of artists and rank distribution of the artists.
-    (However, this is flawed since based on the artists recorded and such for the tested user, which is me, it will always
-    return 28.0)
+    Calculates diversity based on how evenly the user's
+    listening habits are spread across genres.
+
+    Higher scores indicate broader musical exploration.
+    Lower scores indicate stronger focus on a smaller
+    set of genres.
     """
 
-    #If there are no artists to get to calculate artist diversity, return 0.0.
-    if not artists:
+    if not top_genres:
         return 0.0
 
-    #Gets how many artists to get 
-    n = len(artists)
+    total = sum(top_genres.values())
 
-    # Normalizes against a realistic max (not just dataset size).
-    max_expected_artists = 50
-    coverage_score = min(n / max_expected_artists, 1.0)
+    if total == 0:
+        return 0.0
 
-    # If user is heavily top-heavy, score drops slightly
-    rank_sum = sum(range(1, n + 1))
-    max_rank_sum = n * (n + 1) / 2
+    diversity_score = 0.0
 
-    rank_distribution = 1 - (rank_sum / max_rank_sum)
+    for count in top_genres.values():
+        proportion = count / total
 
-    #Final artist diversity score. 
-    diversity = (0.7 * coverage_score + 0.3 * rank_distribution) * 100
+        # Penalize genres that dominate listening habits.
+        diversity_score += (1 - proportion)
 
-    return round(diversity, 2)
+    diversity_score = (diversity_score / len(top_genres)) * 100
+
+    return round(diversity_score, 2)
 
 
 def calculate_personality_traits(artist_score: float) -> str:
+
     """
-    Maps artist diversity score into personality types.
+    Maps diversity score into personality categories.
     """
 
-    if artist_score >= 70:
+    if artist_score >= 75:
         return "Artist Collector"
-    elif artist_score >= 40:
+
+    elif artist_score >= 50:
         return "Balanced Listener"
+
     else:
         return "Comfort Listener"
 
 
-def generate_personality_profile(artists: List[str]) -> Dict[str, Any]:
+def generate_personality_profile(artists, top_genres: Dict[str, int]) -> Dict[str, Any]:
+
     """
-    Builds the final personality profile from Spotify artist data.
+    Builds the final personality profile.
     """
 
-    artist_score = calculate_artist_diversity(artists)
+    artist_score = calculate_artist_diversity(top_genres)
+
     personality_type = calculate_personality_traits(artist_score)
+
+    if personality_type == "Artist Collector":
+
+        summary = (
+            "Your listening habits suggest a highly exploratory "
+            "approach to music. You regularly engage with artists "
+            "from many different genre backgrounds, demonstrating "
+            "curiosity and openness to discovering new sounds."
+        )
+
+    elif personality_type == "Balanced Listener":
+
+        summary = (
+            "Your music taste balances familiarity and exploration. "
+            "While you have clear preferences, you also branch out "
+            "into different styles and artists when something "
+            "captures your interest."
+        )
+
+    else:
+
+        summary = (
+            "Your listening habits show a focused musical identity. "
+            "You tend to develop strong connections with particular "
+            "genres and artists, allowing you to build a deep "
+            "appreciation for the music that resonates most with you."
+        )
 
     profile = {
         "personality": personality_type,
         "artist_score": artist_score,
-        "artist_list": artists
+        "artist_list": artists,
+        "top_genres": top_genres,
+        "summary": summary
     }
 
     return profile
