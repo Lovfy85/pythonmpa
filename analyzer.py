@@ -98,7 +98,7 @@ def calculate_personality_traits(genre_score: float, artist_score: float) -> str
             return "Genre Adventurer"
     else:
         if artist_score >= HIGH_THRESHOLD:  
-            return "Artist Collecter"
+            return "Artist Collector"
         else: 
             return "Comfort Listener"
         
