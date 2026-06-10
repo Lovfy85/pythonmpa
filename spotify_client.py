@@ -32,19 +32,19 @@ def authenticate_user():
     return sp
 
 
-def get_top_artists(sp, limit=5):
+def get_top_artists(sp, limit=20):
     """
-    This is to get that of the top 5 artists from the Spotify user.
+    This is to get that of the top 20 artists from the Spotify user.
     """
     
 
-    #This is to get that of the Spotify user's top 5 artists of all time. 
+    #This is to get that of the Spotify user's top 20 artists of all time. 
     results = sp.current_user_top_artists(
         limit = limit,
         time_range = "long_term"
     )
 
-    #Stores the user's top 5 artists. 
+    #Stores the user's top 20 artists. 
     items = results.get("items", [])
 
     #This is to store that of the artists to be displayed.
@@ -61,18 +61,18 @@ def get_top_artists(sp, limit=5):
     return top_artists
 
 
-def get_top_tracks(sp, limit=5):
+def get_top_tracks(sp, limit=20):
     """
-    This is to get that of the top 5 tracks from the Spotify user.
+    This is to get that of the top 20 tracks from the Spotify user.
     """
 
-    #This is to get that of the Spotify user's top 5 tracks of all time. 
+    #This is to get that of the Spotify user's top 20 tracks of all time. 
     results = sp.current_user_top_tracks(
         limit = limit,
         time_range = "long_term"
     )
 
-    #Stores the user's top 5 tracks.
+    #Stores the user's top 20 tracks.
     items = results.get("items", [])
 
     #This is to store that of the artists to be displayed. 
