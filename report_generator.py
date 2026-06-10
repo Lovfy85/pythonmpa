@@ -1,7 +1,6 @@
 from typing import Dict, List, Any
 import streamlit as st
 
-
 def generate_summary(profile: Dict[str, Any]) -> str:
     
     """
@@ -73,7 +72,6 @@ def generate_trait_explanations(profile: Dict[str, Any]) -> str:
     )
 
 
-
 def create_artist_chart(artists: List[str]) -> None:
 
     """
@@ -94,6 +92,31 @@ def create_artist_chart(artists: List[str]) -> None:
 
     st.bar_chart(chart_data)
 
+
+def create_top_tracks_chart(tracks: List[Any]) -> None:
+
+    """
+    This displays the ranked list of top tracks using Streamlit.
+    """
+
+    if not tracks:
+        st.write("No track data available to make the chart overall.")
+        return
+
+    st.subheader("Top Tracks Breakdown")
+
+    cleaned_tracks = [
+        track.get("name") if isinstance(track, dict) else track
+        for track in tracks
+    ]
+
+    chart_data = {
+        name: rank
+        for rank, name in enumerate(cleaned_tracks, start=1)
+    }
+
+    st.bar_chart(chart_data)
+    
 
 def create_genre_chart(top_genres: Dict[str, int]) -> None:
 
