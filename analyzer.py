@@ -12,22 +12,28 @@ def calculate_artist_diversity(top_genres: Dict[str, int]) -> float:
     set of genres.
     """
 
+    #If there are no genres selected, returns 0.0 as a default score. 
     if not top_genres:
         return 0.0
 
+    #Gets the total genres gotten by their values. 
     total = sum(top_genres.values())
 
+    #If the total of the genres gotten by their values is none, returns 0.0 as a default score. 
     if total == 0:
         return 0.0
 
+    #Initial diversity score based on artist gotten and the genres they are in. 
     diversity_score = 0.0
 
+    #For each counted genre value, calculate its proportion value. 
     for count in top_genres.values():
         proportion = count / total
 
         # Penalize genres that dominate listening habits.
         diversity_score += (1 - proportion)
 
+    #The overall diversity score. 
     diversity_score = (diversity_score / len(top_genres)) * 100
 
     return round(diversity_score, 2)

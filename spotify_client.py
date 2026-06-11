@@ -1,140 +1,220 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+
+from lastfm_client import get_artist_tags
 from config import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, SCOPE
+
+#This is to store that of cache gotten from Spotify and Last.fm.
+# This is used for that of getting genres from both APIs. 
+_artist_genre_cache = {}
+_lastfm_cache = {}
 
 def authenticate_user():
 
     """
-    This is to make the user to be logged in from Spotify to sync up their
-    information to be gotten overall.
+    Logs the user into Spotify and returns an authenticated client.
     """
 
-    #This whole block is to get the information needed from what was established in
-    # config.py.
+    #This is the formatted structure to get auhenticated for the app
+    # through a Spotify account. 
     sp = spotipy.Spotify(
         auth_manager=SpotifyOAuth(
-            client_id = CLIENT_ID,
-            client_secret = CLIENT_SECRET,
-            redirect_uri = REDIRECT_URI,
-            scope = SCOPE,
-            show_dialog = True,
-            cache_path = ".cache"
-        )
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            redirect_uri=REDIRECT_URI,
+            scope=SCOPE,
+            show_dialog=True,
+            cache_path=".cache"
+        ),
+        requests_timeout=30
     )
 
-    #This is to get that of the user to be gotten based on the authentication.
+    #This is to check if a user to be logged in is valid or not. 
     user = sp.current_user()
-
-    #This goes over a simple check where if the user can log in or not to get their
-    # information of the songs they listen to.
     if not user:
-        raise Exception("Failure in authorizing the supposed user overall.")
+        raise Exception("Authentication failed.")
+    print(f"Logged in as: {user['display_name']}")
 
-    print(f"The user is now logged in as: {user['display_name']}")
     return sp
 
 
 def get_top_artists(sp, limit=20):
 
     """
-    This is to get that of the top 20 artists from the Spotify user.
+    Fetch the user's top artists from Spotify.
     """
 
-    #This is to get that of the Spotify user's top 20 artists of all time.
+    #This is to get that of the top 20 artists and to be stored as items in 
+    # an array list.
     results = sp.current_user_top_artists(
-        limit = limit,
-        time_range = "long_term"
-    )
+        limit=limit,
+        time_range="long_term"
+    ).get("items", [])
 
-    items = results.get("items", [])
-
-    #This is to store that of the artists to be displayed.
+    #This is where to store that of the artists overall. 
     top_artists = []
 
-    #For that of the artists to get in the items, get them and have them to
-    # added inside of the 'top_artists' list. Return after.
-    for artist in items:
+    #For each artist that was gotten in results list...
+    for artist in results:
+
+        #Get that of the artist's id and name.
+        artist_id = artist.get("id")
         artist_name = artist.get("name")
 
-        if artist_name is not None:
-            top_artists.append(artist_name)
+        #If cannot get an artist's id or name, move unto the next.
+        if not artist_id or not artist_name:
+            continue
+
+        #To add that artist into the top artists list.
+        top_artists.append({
+            "id": artist_id,
+            "name": artist_name
+        })
 
     return top_artists
 
 
-def get_top_genres(sp, limit=20):
+def get_spotify_artist_genres(sp, artist_id):
 
     """
-    This is to get that of the top genres based on the user's top artists.
+    Get genres for an artist from Spotify API with caching.
     """
 
-    #Get the user's top artists.
-    results = sp.current_user_top_artists(
-        limit = limit,
-        time_range = "long_term"
-    )
+    #This is to get that of the artist's id from the cache. 
+    if artist_id in _artist_genre_cache:
+        return _artist_genre_cache[artist_id]
 
-    items = results.get("items", [])
+    #This tries to get that of an artist's genre(s) by their id. 
+    # Will send an exception if that said artist's genre(s) cannot be gotten. 
+    try:
+        data = sp.artist(artist_id)
+        genres = data.get("genres", [])
+    except Exception as e:
+        print(f"Cannot get a genre(s) for an artist in Spotify {artist_id}: {e}")
+        genres = []
 
-    #Stores the genre frequencies.
+    #Stores what genres were gotten from an artist.
+    _artist_genre_cache[artist_id] = genres
+    return genres
+
+
+def get_lastfm_cached(name):
+
+    """
+    Get artist tags from Last.fm with caching.
+    """
+    
+    #This is to get that of the artist's id from the cache.
+    if name in _lastfm_cache:
+        return _lastfm_cache[name]
+
+    #This tries to get that of an artist's genre(s) by their id.
+    # Will send an exception if that said artist's genre(s) cannot be gotten.
+    try:
+        tags = get_artist_tags(name)
+    except Exception as e:
+        print(f"[LASTFM ERROR] {name}: {e}")
+        tags = []
+
+    #Stores what genres were gotten from an artist.
+    _lastfm_cache[name] = tags
+    return tags
+
+
+def get_top_genres(sp, artists):
+
+    """
+    Combines Spotify + Last.fm gotten genres from artists and counts frequency.
+    """
+
+    print("\n Getting the genres for the artists gotten...")
+
+    #Stores how much that genre has been counted. 
     genre_counts = {}
 
-    #Go through each artist.
-    for artist in items:
+    #For each artist that was gotten and listed....
+    for index, artist in enumerate(artists, start=1):
 
-        #Get the genres associated with the artist.
-        genres = artist.get("genres", [])
+        #Establish that of their name and id. 
+        artist_name = artist["name"]
+        artist_id = artist["id"]
 
-        #Count how often each genre appears.
-        for genre in genres:
+        #This goes through that of the current artist.
+        print(f"[{index}/{len(artists)}] Going thorugh: {artist_name}")
 
-            if genre not in genre_counts:
-                genre_counts[genre] = 1
-            else:
+        #This is to get that of the genres based on what was gotten from Spotify.
+        spotify_raw = get_spotify_artist_genres(sp, artist_id)
+
+        #This is to establish the genres gotten from Spotify and add it to a set.
+        spotify_genres = set()
+        for genre in spotify_raw:
+            spotify_genres.add(genre.lower().strip())
+
+        #This is to get that of an artist's genres from Last.fm.
+        lastfm_raw = get_lastfm_cached(artist_name)
+
+        #This is to establish the genres gotten from Last.fm and add it to a set.
+        lastfm_genres = set()
+        for genre in lastfm_raw:
+            lastfm_genres.add(genre.lower().strip())
+
+        #This is to combine what genres were gotten from Spotify and Last.fm.
+        combined_genres = spotify_genres.union(lastfm_genres)
+
+        #This is to count how many times a specific genre was mentioned. 
+        # If it was not counted before, start counting it now as another appears.
+        for genre in combined_genres:
+            if genre in genre_counts:
                 genre_counts[genre] += 1
+            else:
+                genre_counts[genre] = 1
 
-    return genre_counts
-
-
-def get_top_tracks(sp, limit=20):
-
-    """
-    This is to get that of the top 20 tracks from the Spotify user.
-    """
-
-    #This is to get that of the Spotify user's top 20 tracks of all time.
-    results = sp.current_user_top_tracks(
-        limit = limit,
-        time_range = "long_term"
+    #Sorts the genres in alphabetical order. 
+    sorted_genres = dict(
+        sorted(
+            genre_counts.items(),
+            key=lambda item: item[1],
+            reverse=True
+        )
     )
 
-    items = results.get("items", [])
+    return sorted_genres
 
-    #This is to store that of the artists to be displayed.
+
+def get_top_tracks(sp, limit=20): 
+
+    """
+    Fetch user's top tracks from Spotify.
+    """
+
+    #This is to get that of the top tracks from the Spotify user. 
+    # Stores those tracks as items in a list.
+    results = sp.current_user_top_tracks(
+        limit=limit,
+        time_range="long_term"
+    ).get("items", [])
+
+    #This is where to store the top tracks. 
     top_tracks = []
 
-    #For that of the tracks to get in the items, get them and have them to
-    # added inside of the 'top_tracks' list. Return after.
-    for track in items:
+    #For each track that was gotten, get its name and add it.
+    for track in results:
         track_name = track.get("name")
 
-        if track_name is not None:
+        if track_name:
             top_tracks.append(track_name)
 
     return top_tracks
 
 
 def build_music_profile(top_artists, top_tracks, top_genres):
-    
+
     """
-    This makes the music profile based on the user's top artists, tracks,
-    and genres.
+    Combines all extracted music data into one structured profile.
     """
 
-    profile = {
+    return {
         "top_artists": top_artists,
         "top_tracks": top_tracks,
         "top_genres": top_genres
     }
-
-    return profile

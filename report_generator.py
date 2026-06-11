@@ -1,15 +1,19 @@
 from typing import Dict, List, Any
 import streamlit as st
 
+
 def generate_summary(profile: Dict[str, Any]) -> str:
-    
+
     """
-    This is to create that of the paragraph summary structure for the user's personality profile.
+    This is to make the summary for a personality gotten from the user's calculated 
+    artist diversity overall. 
     """
 
+    #The initial values towards that of the profile summary.
     personality = profile.get("personality", "Unknown")
     artist_score = profile.get("artist_score", 0.0)
 
+    #The added parts for the summary to be stored soon.
     summary_parts = []
 
     summary_parts.append(
@@ -24,12 +28,10 @@ def generate_summary(profile: Dict[str, Any]) -> str:
         summary_parts.append(
             "Your listening habits suggest a strong tendency toward exploring a wide variety of musical styles and artist backgrounds."
         )
-
     elif artist_score >= 40:
         summary_parts.append(
             "Your listening habits suggest a balance between familiar favorites and discovering new musical influences."
         )
-
     else:
         summary_parts.append(
             "Your listening habits suggest a focused musical identity centered around genres and artists that consistently resonate with you."
@@ -41,8 +43,7 @@ def generate_summary(profile: Dict[str, Any]) -> str:
 def generate_trait_explanations(profile: Dict[str, Any]) -> str:
 
     """
-    Makes explanations based on a personality type.
-    If not found, return a fallback message.
+    This is to display the explanations that a user has based on their matched personality.
     """
 
     personality = profile.get("personality", "Unknown")
@@ -53,12 +54,10 @@ def generate_trait_explanations(profile: Dict[str, Any]) -> str:
             "Your listening patterns suggest curiosity, openness, and a willingness "
             "to discover new musical experiences."
         ),
-
         "Balanced Listener": (
             "You maintain a healthy balance between your favorite artists and new discoveries. "
             "You enjoy familiarity while remaining open to different sounds and styles."
         ),
-
         "Comfort Listener": (
             "You have a strong connection to the music you enjoy most. "
             "Your listening habits show consistency and a deep appreciation "
@@ -72,10 +71,11 @@ def generate_trait_explanations(profile: Dict[str, Any]) -> str:
     )
 
 
-def create_artist_chart(artists: List[str]) -> None:
+def create_artist_chart(artists: List[Any]) -> None:
 
     """
-    This displays the ranked list of top artists using Streamlit.
+    This is to just make a bar chart for the artists listed and how they are
+    ranked in a chart.
     """
 
     if not artists:
@@ -84,10 +84,14 @@ def create_artist_chart(artists: List[str]) -> None:
 
     st.subheader("Top Artists Breakdown")
 
-    # Proper ranking instead of fake weighted values
+    cleaned_artists = [
+        a.get("name") if isinstance(a, dict) else str(a)
+        for a in artists
+    ]
+
     chart_data = {
-        artist: rank
-        for rank, artist in enumerate(artists, start=1)
+        name: rank
+        for rank, name in enumerate(cleaned_artists, start=1)
     }
 
     st.bar_chart(chart_data)
@@ -96,7 +100,8 @@ def create_artist_chart(artists: List[str]) -> None:
 def create_top_tracks_chart(tracks: List[Any]) -> None:
 
     """
-    This displays the ranked list of top tracks using Streamlit.
+    This is to just make a bar chart for the tracks listed and how they are
+    ranked in a chart.
     """
 
     if not tracks:
@@ -106,8 +111,8 @@ def create_top_tracks_chart(tracks: List[Any]) -> None:
     st.subheader("Top Tracks Breakdown")
 
     cleaned_tracks = [
-        track.get("name") if isinstance(track, dict) else track
-        for track in tracks
+        t.get("name") if isinstance(t, dict) else str(t)
+        for t in tracks
     ]
 
     chart_data = {
@@ -116,12 +121,13 @@ def create_top_tracks_chart(tracks: List[Any]) -> None:
     }
 
     st.bar_chart(chart_data)
-    
+
 
 def create_genre_chart(top_genres: Dict[str, int]) -> None:
 
     """
-    This displays the user's top genres based on frequency.
+    This is to just make a bar chart for the genres listed and how they are
+    ranked in a chart.
     """
 
     if not top_genres:
@@ -129,23 +135,20 @@ def create_genre_chart(top_genres: Dict[str, int]) -> None:
         return
 
     st.subheader("Top Genres Breakdown")
-
-    # Direct frequency mapping from Spotify-derived data
     st.bar_chart(top_genres)
 
 
 def build_report(profile: Dict[str, Any]) -> Dict[str, Any]:
 
     """
-    This is to just make that of the profile overall that was generated.
+    This is to make the report summary for the user from their personality
+    explained and the charts showing their top artists, genres and tracks.
     """
 
     summary = generate_summary(profile)
-
     trait_explanation = generate_trait_explanations(profile)
 
-    artists = profile.get("artist_list", [])
-
+    artists = profile.get("top_artists", [])
     genres = profile.get("top_genres", {})
 
     return {
