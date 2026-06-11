@@ -133,7 +133,7 @@ def get_top_genres(sp, artists):
     Combines Spotify + Last.fm gotten genres from artists and counts frequency.
     """
 
-    print("\n Getting the genres for the artists gotten...")
+    print("\nGetting the genres for the artists gotten...")
 
     #Stores how much that genre has been counted.
     genre_counts = {}
@@ -224,6 +224,7 @@ def build_music_profile(top_artists, top_tracks, top_genres):
 
 
 def clear_internal_caches():
+
     """
     Clears internal Python caches (Spotify + Last.fm genre/tag cache).
     """
