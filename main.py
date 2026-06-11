@@ -1,12 +1,14 @@
 import streamlit as st
 
-#These are imported to get that of functions from other files. 
+#These are imported to get that of functions from other files.
 from spotify_client import (
     authenticate_user,
     get_top_artists,
     get_top_tracks,
     get_top_genres,
-    build_music_profile
+    build_music_profile,
+    clear_internal_caches,
+    clear_spotify_cache_file
 )
 from analyzer import generate_personality_profile
 from report_generator import (
@@ -22,60 +24,96 @@ st.set_page_config(
     layout="centered"
 )
 
-#Lays out what is expected of the website. 
-st.title("Music Personality Analyzer")
-st.write("Connect your Spotify account to generate your music personality profile.")
+#If not logged in right now or the session state begins anew, then, you can present that of the title and
+# and the description for website.
+if "sp" not in st.session_state or not st.session_state.get("authenticated", False):
+    st.title("Music Personality Analyzer")
+    st.write("Connect your Spotify account to begin analysis.")
 
-
-#This is to check that of the user being validated to be logged in for the website.
-if "sp" not in st.session_state:
+    #If the button is clicked...
     if st.button("Connect to Spotify"):
         try:
-            st.session_state.sp = authenticate_user()
-            st.success("Successfully connected to Spotify!")
+
+            #Gets authentication for user.
+            sp = authenticate_user()
+
+            #Has the user authenticated.
+            st.session_state.sp = sp
+            st.session_state.authenticated = True
+
+            #Immediately jump into app after login.
+            st.rerun()
+
         except Exception as e:
             st.error(f"Authentication failed: {e}")
 
-#The initial state of the session is that the user has not logged in yet. 
-sp = st.session_state.get("sp", None)
+    #Prevents anything below from running
+    st.stop()
 
-#These two functions set that of the cached tracks and artists that were gotten 
+
+#Runs the whole app when logged in.
+sp = st.session_state.sp
+
+#Makes it so that the user can log in and log out manually. 
+col1, col2 = st.columns([4, 1])
+
+with col2:
+    if st.button("Logout"):
+
+        #Removes current authenticated user so another user can log in
+        st.session_state.pop("sp", None)
+        st.session_state.authenticated = False
+
+        #Clears Streamlit cached API responses
+        st.cache_data.clear()
+
+        #Clears internal Python caches (LastFM + Spotify genres)
+        clear_internal_caches()
+
+        #Clears Spotify OAuth token file
+        clear_spotify_cache_file()
+
+        #Force full rerun (fresh state)
+        st.rerun()
+
+
+#These two functions set that of the cached tracks and artists that were gotten
 # from the Spotify API.
 @st.cache_data(ttl=3600)
-def cached_top_artists(_sp):
-    return get_top_artists(_sp, limit=20)
+def cached_top_artists(token):
+    sp = st.session_state.sp
+    return get_top_artists(sp, limit=20)
 
 @st.cache_data(ttl=3600)
-def cached_top_tracks(_sp):
-    return get_top_tracks(_sp, limit=20)
+def cached_top_tracks(token):
+    sp = st.session_state.sp
+    return get_top_tracks(sp, limit=20)
 
-#If the user was successfully logged in. Else, it would just say that the
-# user has to be logged in to get the details gotten from Spotify and Last.fm
-if sp:
+
+#If the user was successfully logged in.
+if st.session_state.get("authenticated", False):
 
     st.write("Analyzing your Spotify data...")
 
-    #Spotify API calls for the top artists and tracks. 
-    top_artists = cached_top_artists(sp)
-    top_tracks = cached_top_tracks(sp)
+    #Spotify API calls for the top artists and tracks.
+    top_artists = cached_top_artists("token")
+    top_tracks = cached_top_tracks("token")
 
-    #Gets the top genres, which are dependent on getting the artists from Spotify API.
-    # From this function, it is a combination of a Spotify and Last.fm API call.
+    #Gets the top genres
     top_genres = get_top_genres(sp, top_artists)
 
-    #Makes the user profile based on top artists, tracks and genres.
+    #Makes the user profile
     profile = build_music_profile(
         top_artists,
         top_tracks,
         top_genres
     )
 
-    #Makes the profile for the user's personality based on top artists and genres. 
+    #Personality profile
     personality_profile = generate_personality_profile(
         top_artists,
         top_genres
     )
-
 
     #This just shows the full report after the analysis gotten from Spotify and
     # Lastfm APIs. 
