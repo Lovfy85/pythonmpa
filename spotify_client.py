@@ -5,6 +5,7 @@ from lastfm_client import get_artist_tags
 from config import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, SCOPE
 
 import os
+import time
 
 #This is to store that of cache gotten from Spotify and Last.fm.
 # This is used for that of getting genres from both APIs.
@@ -34,7 +35,7 @@ def authenticate_user():
     #Manages how long to authroize a user for. 
     sp = spotipy.Spotify(
         auth_manager=auth_manager,
-        requests_timeout=30
+        requests_timeout=60
     )
 
     #This is to check if a user to be logged in is valid or not.
@@ -77,32 +78,28 @@ def get_top_artists(sp, limit=20):
         #To add that artist into the top artists list.
         top_artists.append({
             "id": artist_id,
-            "name": artist_name
+            "name": artist_name,
+
+            #Genres already come from this response sometimes
+            "genres": artist.get("genres", [])
         })
 
     return top_artists
 
 
-def get_spotify_artist_genres(sp, artist_id):
-
+def get_spotify_artist_genres(sp, artist):
     """
-    Get genres for an artist from Spotify API with caching.
+    Kept for compatibility but NO LONGER USES Spotify API CALLS.
     """
 
     #This is to get that of the artist's id from the cache.
+    artist_id = artist.get("id")
     if artist_id in _artist_genre_cache:
         return _artist_genre_cache[artist_id]
 
-    #This tries to get that of an artist's genre(s) by their id.
-    # Will send an exception if that said artist's genre(s) cannot be gotten.
-    try:
-        data = sp.artist(artist_id)
-        genres = data.get("genres", [])
-    except Exception as e:
-        print(f"Cannot get a genre(s) for an artist in Spotify {artist_id}: {e}")
-        genres = []
+    #This now uses already-provided data instead of API calls
+    genres = artist.get("genres", [])
 
-    #Stores what genres were gotten from an artist.
     _artist_genre_cache[artist_id] = genres
     return genres
 
@@ -144,15 +141,17 @@ def get_top_genres(sp, artists):
     #For each artist that was gotten and listed....
     for index, artist in enumerate(artists, start=1):
 
+        #Small delay only for Last.fm safety (Spotify no longer needed here)
+        time.sleep(0.1)
+
         #Establish that of their name and id.
         artist_name = artist["name"]
-        artist_id = artist["id"]
 
         #This goes through that of the current artist.
         print(f"[{index}/{len(artists)}] Going through: {artist_name}")
 
-        #This is to get that of the genres based on what was gotten from Spotify.
-        spotify_raw = get_spotify_artist_genres(sp, artist_id)
+        #No Spotify API CALLS HERE ANYMORE
+        spotify_raw = artist.get("genres", [])
 
         #This is to establish the genres gotten from Spotify and add it to a set.
         spotify_genres = set()
