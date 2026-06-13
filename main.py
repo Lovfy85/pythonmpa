@@ -8,9 +8,10 @@ from spotify_client import (
     get_top_genres,
     build_music_profile,
     clear_internal_caches,
-    clear_spotify_cache_file
+    clear_spotify_cache_file,
+    get_overall_personality_profile
 )
-from analyzer import generate_personality_profile
+
 from report_generator import (
     build_report,
     create_artist_chart,
@@ -77,54 +78,44 @@ with col2:
         st.rerun()
 
 
-#These two functions set that of the cached tracks and artists that were gotten
-# from the Spotify API.
-@st.cache_data(ttl=3600)
-def cached_top_artists(token):
-    sp = st.session_state.sp
-    return get_top_artists(sp, limit=20)
-
-@st.cache_data(ttl=3600)
-def cached_top_tracks(token):
-    sp = st.session_state.sp
-    return get_top_tracks(sp, limit=20)
-
-
 #If the user was successfully logged in.
 if st.session_state.get("authenticated", False):
 
     st.write("Analyzing your Spotify data...")
 
     #Spotify API calls for the top artists and tracks.
-    top_artists = cached_top_artists("token")
-    top_tracks = cached_top_tracks("token")
+    top_artists = get_top_artists(sp, limit=20)
+    top_tracks = get_top_tracks(sp, limit=20)
 
     #Gets the top genres
     top_genres = get_top_genres(sp, top_artists)
+
+    #Gets personality profile (NEW SYSTEM)
+    personality_profile = get_overall_personality_profile(top_artists)
 
     #Makes the user profile
     profile = build_music_profile(
         top_artists,
         top_tracks,
-        top_genres
-    )
-
-    #Personality profile
-    personality_profile = generate_personality_profile(
-        top_artists,
-        top_genres
+        top_genres,
+        personality_profile
     )
 
     #This just shows the full report after the analysis gotten from Spotify and
-    # Lastfm APIs. 
-    full_profile = {**profile, **personality_profile}
-    report = build_report(full_profile)
+    # Last.fm APIs. 
+    report = build_report(profile)
 
     st.success("Analysis complete!")
     st.subheader("Your Music Personality Report")
 
+    #Show dominant trait safely
+    if personality_profile:
+        top_trait = max(personality_profile.items(), key=lambda x: x[1])[0]
+    else:
+        top_trait = "Unknown"
+
     st.markdown(
-        f"### Personality Type\n{full_profile.get('personality', 'Unknown')}"
+        f"### Personality Type\n{top_trait}"
     )
 
     st.markdown("### Summary")

@@ -2,6 +2,16 @@ from typing import Dict, List, Any
 import streamlit as st
 
 
+#Just making each personality label have their own descriptive name. 
+PERSONALITY_LABELS = {
+    "Creative": "The Sonic Explorer",
+    "Introspective": "The Emotional Deep Diver",
+    "Energetic": "The Rhythm Driver",
+    "Rebellious": "The Sound Rebel",
+    "Relaxed": "The Chill Curator"
+}
+
+
 def generate_summary(profile: Dict[str, Any]) -> str:
 
     """
@@ -9,19 +19,31 @@ def generate_summary(profile: Dict[str, Any]) -> str:
     artist diversity overall. 
     """
 
-    #The initial values towards that of the profile summary.
-    personality = profile.get("personality", "Unknown")
+    personality_profile = profile.get("personality_profile", {})
     artist_score = profile.get("artist_score", 0.0)
 
-    #The added parts for the summary to be stored soon.
+    #Determine top personality trait + score
+    top_trait_key = "Unknown"
+    top_trait_score = 0
+
+    if personality_profile:
+        top_trait_key, top_trait_score = max(
+            personality_profile.items(),
+            key=lambda x: x[1]
+        )
+
+    #Establish that of the top personality trait overall. 
+    top_trait_label = PERSONALITY_LABELS.get(top_trait_key, top_trait_key)
+
+    #To store the summary parts for the summary's paragraph sturcture. 
     summary_parts = []
 
     summary_parts.append(
-        "Your music personality has been analyzed based on the diversity of genres represented by the artists you listen to most frequently."
+        "Your music personality has been analyzed based on the diversity of genres and emotional tags from Spotify and Last.fm."
     )
 
     summary_parts.append(
-        f"You are classified as an '{personality}' listener with a diversity score of {artist_score}."
+        f"Your dominant music personality trait is '{top_trait_label}' ({top_trait_score} points)."
     )
 
     if artist_score >= 70:
@@ -46,28 +68,40 @@ def generate_trait_explanations(profile: Dict[str, Any]) -> str:
     This is to display the explanations that a user has based on their matched personality.
     """
 
-    personality = profile.get("personality", "Unknown")
+    personality_profile = profile.get("personality_profile", {})
+
+    if not personality_profile:
+        return "No personality data available."
+
+    #Get top personality trait.
+    top_trait_key = max(personality_profile.items(), key=lambda x: x[1])[0]
 
     explanations = {
-        "Artist Collector": (
-            "You regularly explore artists from a broad range of genres. "
-            "Your listening patterns suggest curiosity, openness, and a willingness "
-            "to discover new musical experiences."
+        "Creative": (
+            "You tend to explore experimental and unconventional sounds. "
+            "Your taste leans toward innovation, artistic expression, and unique musical structures."
         ),
-        "Balanced Listener": (
-            "You maintain a healthy balance between your favorite artists and new discoveries. "
-            "You enjoy familiarity while remaining open to different sounds and styles."
+        "Introspective": (
+            "You gravitate toward emotional, atmospheric, and reflective music. "
+            "Your listening habits suggest depth, nostalgia, and emotional awareness."
         ),
-        "Comfort Listener": (
-            "You have a strong connection to the music you enjoy most. "
-            "Your listening habits show consistency and a deep appreciation "
-            "for particular artists and genres."
+        "Energetic": (
+            "You prefer high-energy, rhythm-driven music. "
+            "Your taste suggests movement, motivation, and upbeat environments."
+        ),
+        "Rebellious": (
+            "You are drawn to aggressive, bold, and high-intensity genres. "
+            "Your taste reflects independence and strong emotional expression."
+        ),
+        "Relaxed": (
+            "You enjoy calm, soothing, and low-intensity music. "
+            "Your taste suggests relaxation, comfort, and emotional grounding."
         )
     }
 
     return explanations.get(
-        personality,
-        "No explanation available for this personality type."
+        top_trait_key,
+        "Your music taste reflects a unique combination of multiple personality traits."
     )
 
 
@@ -151,9 +185,28 @@ def build_report(profile: Dict[str, Any]) -> Dict[str, Any]:
     artists = profile.get("top_artists", [])
     genres = profile.get("top_genres", {})
 
+    personality_profile = profile.get("personality_profile", {})
+
+    top_trait_key = None
+    top_trait_label = None
+    top_trait_score = None
+
+    if personality_profile:
+        top_trait_key, top_trait_score = max(
+            personality_profile.items(),
+            key=lambda x: x[1]
+        )
+        top_trait_label = PERSONALITY_LABELS.get(
+            top_trait_key,
+            top_trait_key
+        )
+
     return {
         "summary": summary,
         "trait_explanation": trait_explanation,
         "artists": artists,
-        "genres": genres
+        "genres": genres,
+        "personality_label": top_trait_label,
+        "personality_key": top_trait_key,
+        "personality_score": top_trait_score
     }

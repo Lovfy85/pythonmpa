@@ -1,7 +1,11 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-from lastfm_client import get_artist_tags
+from lastfm_client import (
+    get_artist_tags,
+    get_artist_personality_scores
+)
+
 from config import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, SCOPE
 
 import os
@@ -11,6 +15,9 @@ import time
 # This is used for that of getting genres from both APIs.
 _artist_genre_cache = {}
 _lastfm_cache = {}
+
+#This is to store personality results gotten from Last.fm.
+_personality_cache = {}
 
 
 def authenticate_user():
@@ -127,6 +134,25 @@ def get_lastfm_cached(name):
     return tags
 
 
+def get_lastfm_personality_cached(name):
+
+    """
+    Get artist personality scores from Last.fm with caching.
+    """
+
+    if name in _personality_cache:
+        return _personality_cache[name]
+
+    try:
+        scores = get_artist_personality_scores(name)
+    except Exception as e:
+        print(f"[PERSONALITY ERROR] {name}: {e}")
+        scores = {}
+
+    _personality_cache[name] = scores
+    return scores
+
+
 def get_top_genres(sp, artists):
 
     """
@@ -210,7 +236,47 @@ def get_top_tracks(sp, limit=20):
     return top_tracks
 
 
-def build_music_profile(top_artists, top_tracks, top_genres):
+def get_overall_personality_profile(artists):
+
+    """
+    Combines personality scores across all artists.
+    """
+
+    print("\nCalculating personality profile...")
+
+    #To store the overall personality traits gotten. 
+    overall = {}
+
+    #For each artist to go over their dominant personality overall...
+    for index, artist in enumerate(artists, start=1):
+
+        #Establishes the artist's name.
+        artist_name = artist["name"]
+
+        #Display the personality for an artist.
+        print(f"[{index}/{len(artists)}] Personality for: {artist_name}")
+
+        #Gets the personality score from the specified cache.
+        scores = get_lastfm_personality_cached(artist_name)
+
+        #For each personality trait, initialize their total values counted from the artists.
+        for trait, value in scores.items():
+            overall[trait] = overall.get(trait, 0) + value
+
+        #This is to make sure that when getting the artists, there is a delay.
+        #This is to not make the program crash. 
+        time.sleep(0.1)
+
+    sorted_scores = dict(
+        sorted(overall.items(), key=lambda x: x[1], reverse=True)
+    )
+
+    print(f"Final personality profile: {sorted_scores}")
+
+    return sorted_scores
+
+
+def build_music_profile(top_artists, top_tracks, top_genres, personality_profile=None):
 
     """
     Combines all extracted music data into one structured profile.
@@ -219,7 +285,8 @@ def build_music_profile(top_artists, top_tracks, top_genres):
     return {
         "top_artists": top_artists,
         "top_tracks": top_tracks,
-        "top_genres": top_genres
+        "top_genres": top_genres,
+        "personality_profile": personality_profile
     }
 
 
@@ -230,6 +297,7 @@ def clear_internal_caches():
     """
     _artist_genre_cache.clear()
     _lastfm_cache.clear()
+    _personality_cache.clear()
 
 
 def clear_spotify_cache_file():
