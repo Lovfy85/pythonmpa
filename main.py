@@ -119,19 +119,29 @@ if st.session_state.get("authenticated", False):
         f"### Personality Type\n{top_trait}"
     )
 
-    st.markdown("### Summary")
-    st.write(report["summary"])
+    #Summary dropdown
+    with st.expander("Summary", expanded=True):
+        st.write(report["summary"])
 
-    st.markdown("### Trait Explanation")
-    st.write(report["trait_explanation"])
+    #Trait explanation dropdown
+    with st.expander("Trait Explanation"):
+        st.write(report["trait_explanation"])
 
-    #Personality radar chart
-    create_personality_radar_chart(profile)
+    #Personality radar chart dropdown
+    with st.expander("Personality Radar Chart"):
+        create_personality_radar_chart(profile)
 
-    #Other charts
-    create_artist_chart(top_artists)
-    create_genre_chart(top_genres)
-    create_top_tracks_chart(top_tracks)
+    #Top artists dropdown
+    with st.expander("Top Artists"):
+        create_artist_chart(top_artists)
+
+    #Top genres dropdown
+    with st.expander("Top Genres"):
+        create_genre_chart(top_genres)
+
+    #Top tracks dropdown
+    with st.expander("Top Tracks"):
+        create_top_tracks_chart(top_tracks)
 
 else:
     st.info("Please connect your Spotify account to begin analysis.")
