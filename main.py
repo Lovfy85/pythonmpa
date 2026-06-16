@@ -56,26 +56,34 @@ if "sp" not in st.session_state or not st.session_state.get("authenticated", Fal
 #Runs the whole app when logged in.
 sp = st.session_state.sp
 
-#Makes it so that the user can log in and log out manually.
+#Shows two sides by columns
 col1, col2 = st.columns([4, 1])
+
+# Get logged-in user's name
+user = sp.current_user()
+username = user.get("display_name", "Spotify User")
+
+#The left side shows who is logged in as the user.
+with col1:
+    st.write(f"Logged in as: **{username}**")
 
 with col2:
     if st.button("Logout"):
 
-        #Removes current authenticated user so another user can log in
+        # Removes current authenticated user so another user can log in
         st.session_state.pop("sp", None)
         st.session_state.authenticated = False
 
-        #Clears Streamlit cached API responses
+        # Clears Streamlit cached API responses
         st.cache_data.clear()
 
-        #Clears internal Python caches (LastFM + Spotify genres)
+        # Clears internal Python caches (LastFM + Spotify genres)
         clear_internal_caches()
 
-        #Clears Spotify OAuth token file
+        # Clears Spotify OAuth token file
         clear_spotify_cache_file()
 
-        #Force full rerun (fresh state)
+        # Force full rerun (fresh state)
         st.rerun()
 
 
