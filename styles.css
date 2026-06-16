@@ -1,0 +1,25 @@
+.user-card {
+    background-color: #1E1E1E;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid #333333;
+    margin-bottom: 15px;
+}
+
+.user-label {
+    font-size: 13px;
+    color: #B3B3B3;
+}
+
+.user-name {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1DB954;
+}
+
+.stButton button {
+    height: 48px;
+    font-size: 16px;
+    border-radius: 10px;
+    font-weight: 600;
+}

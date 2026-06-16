@@ -26,6 +26,13 @@ st.set_page_config(
     layout="centered"
 )
 
+#Loads CSS styling from separate file.
+with open("styles.css") as f:
+    st.markdown(
+        f"<style>{f.read()}</style>",
+        unsafe_allow_html=True
+    )
+
 #If not logged in right now or the session state begins anew, then, you can present that of the title and
 # and the description for website.
 if "sp" not in st.session_state or not st.session_state.get("authenticated", False):
@@ -56,35 +63,69 @@ if "sp" not in st.session_state or not st.session_state.get("authenticated", Fal
 #Runs the whole app when logged in.
 sp = st.session_state.sp
 
-#Shows two sides by columns
-col1, col2 = st.columns([4, 1])
-
-# Get logged-in user's name
+#Gets information about the logged-in user.
 user = sp.current_user()
 username = user.get("display_name", "Spotify User")
 
-#The left side shows who is logged in as the user.
-with col1:
-    st.write(f"Logged in as: **{username}**")
+#Gets the user's Spotify profile picture if one exists.
+images = user.get("images", [])
+profile_pic = images[0]["url"] if images else None
 
-with col2:
-    if st.button("Logout"):
 
-        # Removes current authenticated user so another user can log in
-        st.session_state.pop("sp", None)
-        st.session_state.authenticated = False
+#Creates a nicer profile header and logout section.
+with st.container(border=True):
 
-        # Clears Streamlit cached API responses
-        st.cache_data.clear()
+    col1, col2 = st.columns([5, 1])
 
-        # Clears internal Python caches (LastFM + Spotify genres)
-        clear_internal_caches()
+    with col1:
 
-        # Clears Spotify OAuth token file
-        clear_spotify_cache_file()
+        pic_col, text_col = st.columns([1, 5])
 
-        # Force full rerun (fresh state)
-        st.rerun()
+        with pic_col:
+            #Profile picture (default Streamlit display)
+            if profile_pic:
+                st.image(profile_pic, width=70)
+
+        with text_col:
+            st.markdown(
+                f"""
+                <div class="user-card">
+                    <div class="user-label">
+                        🎵 Logged in as
+                    </div>
+                    <div class="user-name">
+                        {username}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    with col2:
+
+        st.write("")
+        st.write("")
+
+        if st.button(
+            "🚪 Logout",
+            use_container_width=True
+        ):
+
+            #Removes current authenticated user so another user can log in
+            st.session_state.pop("sp", None)
+            st.session_state.authenticated = False
+
+            #Clears Streamlit cached API responses
+            st.cache_data.clear()
+
+            #Clears internal Python caches (LastFM + Spotify genres)
+            clear_internal_caches()
+
+            #Clears Spotify OAuth token file
+            clear_spotify_cache_file()
+
+            #Force full rerun (fresh state)
+            st.rerun()
 
 
 #If the user was successfully logged in.
