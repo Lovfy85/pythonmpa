@@ -148,9 +148,15 @@ def create_personality_radar_chart(profile: Dict[str, Any]) -> None:
         polar=dict(
             radialaxis=dict(
                 visible=True,
-                rangemode="tozero"
+                rangemode="tozero",
+                tickfont=dict(color="black")
+            ),
+            angularaxis=dict(
+                tickfont=dict(color="black")
             )
         ),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
         showlegend=False
     )
     st.plotly_chart(fig, use_container_width=True)
