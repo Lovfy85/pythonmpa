@@ -14,6 +14,7 @@ from spotify_client import (
 
 from report_generator import (
     build_report,
+    create_personality_radar_chart,
     create_artist_chart,
     create_genre_chart,
     create_top_tracks_chart
@@ -55,7 +56,7 @@ if "sp" not in st.session_state or not st.session_state.get("authenticated", Fal
 #Runs the whole app when logged in.
 sp = st.session_state.sp
 
-#Makes it so that the user can log in and log out manually. 
+#Makes it so that the user can log in and log out manually.
 col1, col2 = st.columns([4, 1])
 
 with col2:
@@ -102,7 +103,7 @@ if st.session_state.get("authenticated", False):
     )
 
     #This just shows the full report after the analysis gotten from Spotify and
-    # Last.fm APIs. 
+    # Last.fm APIs.
     report = build_report(profile)
 
     st.success("Analysis complete!")
@@ -124,8 +125,10 @@ if st.session_state.get("authenticated", False):
     st.markdown("### Trait Explanation")
     st.write(report["trait_explanation"])
 
-    st.markdown("### Charts")
+    #Personality radar chart
+    create_personality_radar_chart(profile)
 
+    #Other charts
     create_artist_chart(top_artists)
     create_genre_chart(top_genres)
     create_top_tracks_chart(top_tracks)

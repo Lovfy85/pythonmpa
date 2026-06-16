@@ -1,8 +1,11 @@
 from typing import Dict, List, Any
 import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 
 
-#Just making each personality label have their own descriptive name. 
+#Just making each personality label have their own descriptive name.
 PERSONALITY_LABELS = {
     "Creative": "The Sonic Explorer",
     "Introspective": "The Emotional Deep Diver",
@@ -15,8 +18,8 @@ PERSONALITY_LABELS = {
 def generate_summary(profile: Dict[str, Any]) -> str:
 
     """
-    This is to make the summary for a personality gotten from the user's calculated 
-    artist diversity overall. 
+    This is to make the summary for a personality gotten from the user's calculated
+    artist diversity overall.
     """
 
     personality_profile = profile.get("personality_profile", {})
@@ -32,10 +35,10 @@ def generate_summary(profile: Dict[str, Any]) -> str:
             key=lambda x: x[1]
         )
 
-    #Establish that of the top personality trait overall. 
+    #Establish that of the top personality trait overall.
     top_trait_label = PERSONALITY_LABELS.get(top_trait_key, top_trait_key)
 
-    #To store the summary parts for the summary's paragraph sturcture. 
+    #To store the summary parts for the summary's paragraph sturcture.
     summary_parts = []
 
     summary_parts.append(
@@ -105,6 +108,54 @@ def generate_trait_explanations(profile: Dict[str, Any]) -> str:
     )
 
 
+def create_personality_radar_chart(profile: Dict[str, Any]) -> None:
+
+    """
+    Creates a radar chart showing the user's music personality profile.
+    """
+
+    #This gets that of the personality profile overall. 
+    personality_profile = profile.get("personality_profile", {})
+
+    #If the gotten personality profile has no data overal, display in the website that
+    # the radar graph cannot be made overall. 
+    if not personality_profile:
+        st.write("No personality data available to make the chart overall.")
+        return
+
+    st.subheader("Music Personality Profile Breakdown")
+
+    #This is to establish that of the personality as the keys with their values 
+    # to show as to how they were ordered. 
+    labels = list(personality_profile.keys())
+    values = list(personality_profile.values())
+
+    # Close the polygon.
+    labels.append(labels[0])
+    values.append(values[0])
+
+    #This whole block is to just generate the radar graph's attributes overall.
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatterpolar(
+            r=values,
+            theta=labels,
+            fill="toself",
+            name="Personality Score"
+        )
+    )
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                rangemode="tozero"
+            )
+        ),
+        showlegend=False
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
 def create_artist_chart(artists: List[Any]) -> None:
 
     """
@@ -128,7 +179,25 @@ def create_artist_chart(artists: List[Any]) -> None:
         for rank, name in enumerate(cleaned_artists, start=1)
     }
 
-    st.bar_chart(chart_data)
+    #This whole block is responsible for making the graph have its bars be horizontal. 
+    df = pd.DataFrame(
+        {
+            "Artist": list(chart_data.keys()),
+            "Rank": list(chart_data.values())
+        }
+    )
+    fig = px.bar(
+        df,
+        x="Rank",
+        y="Artist",
+        orientation="h"
+    )
+    fig.update_layout(
+        yaxis={"autorange": "reversed"},
+        xaxis_title="Rank",
+        yaxis_title="Artist"
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def create_top_tracks_chart(tracks: List[Any]) -> None:
@@ -154,7 +223,25 @@ def create_top_tracks_chart(tracks: List[Any]) -> None:
         for rank, name in enumerate(cleaned_tracks, start=1)
     }
 
-    st.bar_chart(chart_data)
+    #This whole block is responsible for making the graph have its bars be horizontal. 
+    df = pd.DataFrame(
+        {
+            "Track": list(chart_data.keys()),
+            "Rank": list(chart_data.values())
+        }
+    )
+    fig = px.bar(
+        df,
+        x="Rank",
+        y="Track",
+        orientation="h"
+    )
+    fig.update_layout(
+        yaxis={"autorange": "reversed"},
+        xaxis_title="Rank",
+        yaxis_title="Track"
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def create_genre_chart(top_genres: Dict[str, int]) -> None:
@@ -169,7 +256,26 @@ def create_genre_chart(top_genres: Dict[str, int]) -> None:
         return
 
     st.subheader("Top Genres Breakdown")
-    st.bar_chart(top_genres)
+
+    #This whole block is responsible for making the graph have its bars be horizontal. 
+    df = pd.DataFrame(
+        {
+            "Genre": list(top_genres.keys()),
+            "Count": list(top_genres.values())
+        }
+    )
+    fig = px.bar(
+        df,
+        x="Count",
+        y="Genre",
+        orientation="h"
+    )
+    fig.update_layout(
+        yaxis={"categoryorder": "total ascending"},
+        xaxis_title="Count",
+        yaxis_title="Genre"
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def build_report(profile: Dict[str, Any]) -> Dict[str, Any]:
