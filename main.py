@@ -22,8 +22,8 @@ from report_generator import (
 
 #How the website is to be established from its layout and website tab's title.
 st.set_page_config(
-    page_title="PythonMPA - Music Personality Analyzer",
-    layout="centered"
+    page_title="Spotify Personality Analyzer",
+    layout="wide"
 )
 
 #Loads CSS styling from separate file.
@@ -33,20 +33,73 @@ with open("styles.css") as f:
         unsafe_allow_html=True
     )
 
-#If not logged in right now or the session state begins anew, then, you can present that of the title and
-# and the description for website.
+#Just to show that of the website when first booted up. 
 if "sp" not in st.session_state or not st.session_state.get("authenticated", False):
-    st.title("Music Personality Analyzer")
-    st.write("Connect your Spotify account to begin analysis.")
 
-    #If the button is clicked...
-    if st.button("Connect to Spotify"):
+    #Showcasing what the website is all about. 
+    st.markdown("""
+    <div class="landing-header">
+        <div class="landing-title">🎧 Spotify Personality Analyzer 🎧</div>
+        <div class="landing-subtitle">
+            Discover what your Spotify taste says about your personality — your type of mood and listening activity.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    #Divider for visual separation
+    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+
+    #Section title for features
+    st.markdown("## What the website's features are: ")
+
+    #This is the feature section showcasing what types of features there are overall that can be seen
+    # when logging in the website. 
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🎵</div>
+            <h3>Taste Analysis</h3>
+            <p>Analyzes your top artists, tracks, and genres to understand your listening habits.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <h3>Personality Profile</h3>
+            <p>Your overall music taste connect to a type of personality trait generated.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Visual Insights</h3>
+            <p>There are charts to show who your top artists, genres and tracks as well as what personality you are closest to.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    #Spacing divider
+    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+
+    #CTA section (call to action)
+    st.markdown("""
+    <div class="cta-section">
+        <div class="cta-title">Ready to discover your music identity?</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if st.button("🚀 Connect to Spotify", use_container_width=True):
         try:
 
             #Gets authentication for user.
             sp = authenticate_user()
 
-            #Has the user authenticated.
+            #Stores authenticated session
             st.session_state.sp = sp
             st.session_state.authenticated = True
 
@@ -59,8 +112,7 @@ if "sp" not in st.session_state or not st.session_state.get("authenticated", Fal
     #Prevents anything below from running
     st.stop()
 
-
-#Runs the whole app when logged in.
+#Establishes for the user to log in the website. 
 sp = st.session_state.sp
 
 #Gets information about the logged-in user.
@@ -73,7 +125,7 @@ profile_pic = images[0]["url"] if images else None
 
 
 #Creates a nicer profile header and logout section.
-with st.container(border=True):
+with st.container():
 
     col1, col2 = st.columns([5, 1])
 
@@ -106,10 +158,7 @@ with st.container(border=True):
         st.write("")
         st.write("")
 
-        if st.button(
-            "🚪 Logout",
-            use_container_width=True
-        ):
+        if st.button("🚪 Logout", use_container_width=True):
 
             #Removes current authenticated user so another user can log in
             st.session_state.pop("sp", None)
@@ -128,35 +177,38 @@ with st.container(border=True):
             st.rerun()
 
 
-#If the user was successfully logged in.
+#Just goes over the analysis. 
 if st.session_state.get("authenticated", False):
 
-    st.write("Analyzing your Spotify data...")
+    with st.status("🎧 Analyzing your music identity...", expanded=True) as status:
 
-    #Spotify API calls for the top artists and tracks.
-    top_artists = get_top_artists(sp, limit=20)
-    top_tracks = get_top_tracks(sp, limit=20)
+        st.write("Fetching top artists...")
+        top_artists = get_top_artists(sp, limit=20)
 
-    #Gets the top genres
-    top_genres = get_top_genres(sp, top_artists)
+        st.write("Fetching top tracks...")
+        top_tracks = get_top_tracks(sp, limit=20)
 
-    #Gets personality profile (NEW SYSTEM)
-    personality_profile = get_overall_personality_profile(top_artists)
+        st.write("Analyzing genres...")
+        top_genres = get_top_genres(sp, top_artists)
 
-    #Makes the user profile
-    profile = build_music_profile(
-        top_artists,
-        top_tracks,
-        top_genres,
-        personality_profile
-    )
+        st.write("Building personality profile...")
+        personality_profile = get_overall_personality_profile(top_artists)
 
-    #This just shows the full report after the analysis gotten from Spotify and
-    # Last.fm APIs.
-    report = build_report(profile)
+        st.write("Generating full music profile...")
+        profile = build_music_profile(
+            top_artists,
+            top_tracks,
+            top_genres,
+            personality_profile
+        )
 
-    st.success("Analysis complete!")
-    st.subheader("Your Music Personality Report")
+        st.write("Writing report...")
+        report = build_report(profile)
+
+        status.update(label="Analysis complete!", state="complete")
+
+
+    st.markdown("## Your Music Personality Report")
 
     #Show dominant trait safely
     if personality_profile:
@@ -164,9 +216,14 @@ if st.session_state.get("authenticated", False):
     else:
         top_trait = "Unknown"
 
-    st.markdown(
-        f"### Personality Type\n{top_trait}"
-    )
+    #Highlight card (main result)
+    st.markdown(f"""
+    <div class="highlight-card">
+        <div class="highlight-label">Your Dominant Personality</div>
+        <div class="highlight-value">{top_trait}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
 
     #Summary dropdown
     with st.expander("Summary", expanded=True):
