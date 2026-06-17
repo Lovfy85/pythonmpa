@@ -41,7 +41,7 @@ if "sp" not in st.session_state or not st.session_state.get("authenticated", Fal
     <div class="landing-header">
         <div class="landing-title">🎧 Spotify Personality Analyzer 🎧</div>
         <div class="landing-subtitle">
-            Discover what your Spotify taste says about your personality — your type of mood and listening activity.
+            Discover what your Spotify taste says about your personality.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -61,7 +61,7 @@ if "sp" not in st.session_state or not st.session_state.get("authenticated", Fal
         <div class="feature-card">
             <div class="feature-icon">🎵</div>
             <h3>Taste Analysis</h3>
-            <p>Analyzes your top artists, tracks, and genres to understand your listening habits.</p>
+            <p>Analyzes your top artists, tracks, and genres you have listened throughout the years to understand your listening habits.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -70,7 +70,7 @@ if "sp" not in st.session_state or not st.session_state.get("authenticated", Fal
         <div class="feature-card">
             <div class="feature-icon">🧠</div>
             <h3>Personality Profile</h3>
-            <p>Your overall music taste connect to a type of personality trait generated.</p>
+            <p>Your overall music taste connects to a personality trait and generates an explanation behind it.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -79,7 +79,7 @@ if "sp" not in st.session_state or not st.session_state.get("authenticated", Fal
         <div class="feature-card">
             <div class="feature-icon">📊</div>
             <h3>Visual Insights</h3>
-            <p>There are charts to show who your top artists, genres and tracks as well as what personality you are closest to.</p>
+            <p>Charts to show who your top artists, genres and tracks are as well as what personality you are closest to.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -124,29 +124,24 @@ images = user.get("images", [])
 profile_pic = images[0]["url"] if images else None
 
 
-#Creates a nicer profile header and logout section.
+#Creates the profile header and logout section.
 with st.container():
 
     col1, col2 = st.columns([5, 1])
 
     with col1:
+        header_col1, header_col2 = st.columns([1, 5])
 
-        pic_col, text_col = st.columns([1, 5])
-
-        with pic_col:
-            #Profile picture (default Streamlit display)
+        with header_col1:
             if profile_pic:
-                st.image(profile_pic, width=70)
+                st.image(profile_pic, width=160)
 
-        with text_col:
+        with header_col2:
             st.markdown(
                 f"""
                 <div class="user-card">
-                    <div class="user-label">
-                        🎵 Logged in as
-                    </div>
-                    <div class="user-name">
-                        {username}
+                    <div class="user-name-line">
+                        🎵 Logged in as: <span class="username">{username}</span>
                     </div>
                 </div>
                 """,

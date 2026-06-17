@@ -101,6 +101,13 @@ body {
     color: #1DB954;
 }
 
+.profile-pic {
+    width: 180px;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+}
+
 .highlight-card {
     background: linear-gradient(145deg, #1e1e1e, #121212);
     border: 1px solid #2a2a2a;
@@ -138,4 +145,26 @@ details {
     .landing-subtitle {
         font-size: 16px;
     }
+}
+
+.user-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.user-name-line {
+    font-size: 28px;
+    font-weight: 800;
+    color: white;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+}
+
+.username {
+    font-size: 32px;
+    font-weight: 900;
+    color: #1DB954;
+    margin-left: 8px;
 }
