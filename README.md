@@ -43,7 +43,7 @@ Before running the application, ensure you have:
 ### 1. Clone the repository
 
 ```
-git clone https://github.com/Lovfy85/pythonmpa.git cd MusicPersonalityAnalyzer
+git clone https://github.com/Lovfy85/pythonmpa.git MusicPersonalityAnalyzer
 ```
 
 ### 2. (Recommended) Create a virtual environment
@@ -169,6 +169,6 @@ The project uses the following Python libraries:
 
 Developed by **Cedar Ancheta** as a personal portfolio project demonstrating API integration, data analysis, interactive data visualization, and full-stack application development using Python.
 
-License
+## License
 Copyright (c) 2026 Cedar Ancheta
 All rights reserved. 
