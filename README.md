@@ -163,10 +163,9 @@ The project uses the following Python libraries:
 - reportlab
 - python-dotenv
 - requests
-
+  
 ---
 ## Author
-
 Developed by **Cedar Ancheta** as a personal portfolio project demonstrating API integration, data analysis, interactive data visualization, and full-stack application development using Python.
 
 ## License
