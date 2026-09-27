@@ -6,7 +6,7 @@ A web-based music analytics application that analyzes a user's Spotify listening
 - Secure Spotify OAuth authentication
 - Retrieves and analyzes a user's top artists, tracks, and genres
 - Hybrid genre detection using Spotify and Last.fm
-- Generates a personalized music personality profile based on listening habits
+- Generates personalized music personality profile based on listening habits
 - Interactive charts and visualizations
 - Personality radar chart
 - Downloadable PDF personality report
